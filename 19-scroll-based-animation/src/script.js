@@ -48,6 +48,25 @@ mesh3.position.x = 2;
 
 scene.add(mesh1, mesh2, mesh3);
 
+const particleCount = 200;
+const positions = new Float32Array(particleCount * 3);
+
+for (let i = 0; i < particleCount * 3; i++) {
+  positions[i * 3 + 0] = (Math.random() - 0.5) * 10;
+  positions[i * 3 + 1] = objectDistance * 0.5 - Math.random() * 10;
+  positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+}
+
+const particlesGeometry = new THREE.BufferGeometry();
+particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const particlesMaterial = new THREE.PointsMaterial({
+  color: 'red',
+  sizeAttenuation: true,
+  size: 0.03,
+});
+const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+scene.add(particles);
+
 const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
 directionalLight.position.set(1, 1, 0);
 scene.add(directionalLight);
@@ -114,10 +133,27 @@ window.addEventListener('mousemove', (event) => {
  * Animate
  */
 const clock = new THREE.Clock();
+let previousTime = 0;
+
+let previousFrameTime = 0;
+const targetFPS = 60;
+const frameDuration = 1 / targetFPS;
 
 const tick = () => {
   const elapsedTime = clock.getElapsedTime();
+  const deltaTime = elapsedTime - previousTime;
+  previousTime = elapsedTime;
 
+  // Framerates;
+  const currentFrameTime = clock.getElapsedTime();
+  const timeSinceLastFrame = currentFrameTime - previousFrameTime;
+
+  if (timeSinceLastFrame >= frameDuration) {
+    previousFrameTime = currentFrameTime;
+    if (elapsedTime <= 1) {
+      console.log('elapsedTime');
+    }
+  }
   for (const mesh of meshes) {
     mesh.rotation.y = elapsedTime * 0.1;
     mesh.rotation.x = elapsedTime * 0.1;
@@ -127,8 +163,8 @@ const tick = () => {
 
   const parallaxY = -cursor.y;
   const parallaxX = cursor.x;
-  cameraGroup.position.x = parallaxX;
-  cameraGroup.position.y = parallaxY;
+  cameraGroup.position.x = (parallaxX - cameraGroup.position.x) * 50 * deltaTime;
+  cameraGroup.position.y = (parallaxY - cameraGroup.position.x) * 50 * deltaTime;
 
   // Render
   renderer.render(scene, camera);
